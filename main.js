@@ -1,80 +1,74 @@
 // ============================================
 // ANNY 3D - Three.js Character Controller
 // ============================================
-// Projeto vanilla JavaScript + Three.js via CDN
-// Sem Node.js, sem build tools, sem frameworks
 
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 // ============================================
-// CONFIGURAÇÕES GLOBAIS
+// CONFIGURAÇÕES
 // ============================================
 
 const CONFIG = {
-    // Velocidade de movimento do personagem
     moveSpeed: 0.1,
-    
-    // Velocidade de rotação (interpolação suave)
     rotationSpeed: 0.15,
-    
-    // Altura da câmera em relação ao personagem
     cameraHeight: 3,
-    
-    // Distância da câmera atrás do personagem
     cameraDistance: 5,
-    
-    // Suavidade do follow da câmera (0-1, menor = mais suave)
     cameraSmoothness: 0.1,
-    
-    // Cor do chão
-    groundColor: 0x2a2a3e,
-    
-    // Cor da iluminação ambiente
-    ambientColor: 0x404040,
-    
-    // Cor da luz direcional (sol)
-    sunColor: 0xffffff,
-    
-    // Intensidade da luz ambiente
-    ambientIntensity: 0.6,
-    
-    // Intensidade da luz direcional
-    sunIntensity: 1.2
+    joystickMaxRadius: 35
 };
 
 // ============================================
-// ESTADO DO JOGO
+// ESTADO
 // ============================================
 
 const state = {
-    // Teclas pressionadas
-    keys: {
-        w: false,
-        a: false,
-        s: false,
-        d: false
-    },
-    
-    // Referências aos objetos Three.js
+    keys: { w: false, a: false, s: false, d: false },
     scene: null,
     camera: null,
     renderer: null,
     character: null,
     mixer: null,
+    isLoaded: false,
+    isTouchDevice: false,
     
-    // Controles
-    controls: null,
+    joystick: {
+        active: false,
+        originX: 0,
+        originY: 0,
+        currentX: 0,
+        currentY: 0,
+        vector: new THREE.Vector2(0, 0)
+    }
+};
+
+// ============================================
+// LOADING MANAGER
+// ============================================
+
+const loadingManager = {
+    progressBar: document.getElementById('progress-bar'),
+    percentText: document.getElementById('loading-percent'),
+    statusText: document.getElementById('loading-status'),
+    screen: document.getElementById('loading-screen'),
+    canvas: document.getElementById('canvas-container'),
+    ui: document.getElementById('ui'),
     
-    // Vetor de movimento calculado
-    moveDirection: new THREE.Vector3(),
+    update(progress, status) {
+        this.progressBar.style.width = progress + '%';
+        this.percentText.textContent = Math.floor(progress) + '%';
+        if (status) this.statusText.textContent = status;
+    },
     
-    // Posição alvo da câmera (para suavização)
-    targetCameraPosition: new THREE.Vector3(),
-    
-    // Flag para verificar se modelo foi carregado
-    isLoaded: false
+    complete() {
+        this.update(100, 'Pronto!');
+        
+        setTimeout(() => {
+            this.screen.classList.add('hidden');
+            this.canvas.classList.add('loaded');
+            setTimeout(() => this.ui.classList.add('visible'), 300);
+        }, 500);
+    }
 };
 
 // ============================================
@@ -82,36 +76,70 @@ const state = {
 // ============================================
 
 function init() {
-    // Criar cena
+    state.isTouchDevice = window.matchMedia('(pointer: coarse)').matches;
+    
+    if (state.isTouchDevice) {
+        document.getElementById('desktop-hint').style.display = 'none';
+        document.getElementById('mobile-hint').style.display = 'inline';
+    }
+    
+    simulateLoading();
+}
+
+function simulateLoading() {
+    const steps = [
+        { progress: 15, status: 'Carregando recursos...', delay: 300 },
+        { progress: 35, status: 'Inicializando gráficos...', delay: 400 },
+        { progress: 55, status: 'Construindo mundo 3D...', delay: 500 },
+        { progress: 75, status: 'Carregando personagem...', delay: 600 },
+        { progress: 90, status: 'Finalizando...', delay: 400 },
+        { progress: 100, status: 'Pronto!', delay: 200 }
+    ];
+    
+    let current = 0;
+    
+    function next() {
+        if (current >= steps.length) {
+            startGame();
+            return;
+        }
+        const step = steps[current];
+        setTimeout(() => {
+            loadingManager.update(step.progress, step.status);
+            current++;
+            next();
+        }, step.delay);
+    }
+    
+    next();
+}
+
+function startGame() {
     createScene();
-    
-    // Criar câmera
     createCamera();
-    
-    // Criar renderer
     createRenderer();
-    
-    // Criar iluminação
     createLighting();
-    
-    // Criar chão
     createGround();
-    
-    // Carregar personagem Anny
-    loadCharacter();
-    
-    // Configurar controles de input
     setupInput();
     
-    // Iniciar loop de animação
+    if (state.isTouchDevice) setupJoystick();
+    
+    loadCharacter();
     animate();
     
-    // Handle resize da janela
     window.addEventListener('resize', onWindowResize);
+    
+    // Verificar quando personagem carregar
+    const check = setInterval(() => {
+        if (state.isLoaded) {
+            clearInterval(check);
+            loadingManager.complete();
+        }
+    }, 100);
 }
 
 // ============================================
-// CENA
+// THREE.JS - CENA
 // ============================================
 
 function createScene() {
@@ -120,32 +148,18 @@ function createScene() {
     state.scene.fog = new THREE.Fog(0x1a1a2e, 10, 50);
 }
 
-// ============================================
-// CÂMERA
-// ============================================
-
 function createCamera() {
     state.camera = new THREE.PerspectiveCamera(
-        75, // FOV
-        window.innerWidth / window.innerHeight, // Aspect ratio
-        0.1, // Near plane
-        1000 // Far plane
+        75,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        1000
     );
-    
-    // Posição inicial
     state.camera.position.set(0, CONFIG.cameraHeight, CONFIG.cameraDistance);
 }
 
-// ============================================
-// RENDERER
-// ============================================
-
 function createRenderer() {
-    state.renderer = new THREE.WebGLRenderer({ 
-        antialias: true,
-        alpha: false 
-    });
-    
+    state.renderer = new THREE.WebGLRenderer({ antialias: true });
     state.renderer.setSize(window.innerWidth, window.innerHeight);
     state.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     state.renderer.shadowMap.enabled = true;
@@ -154,327 +168,245 @@ function createRenderer() {
     document.getElementById('canvas-container').appendChild(state.renderer.domElement);
 }
 
-// ============================================
-// ILUMINAÇÃO
-// ============================================
-
 function createLighting() {
-    // Luz ambiente - iluminação base suave
-    const ambientLight = new THREE.AmbientLight(
-        CONFIG.ambientColor, 
-        CONFIG.ambientIntensity
-    );
-    state.scene.add(ambientLight);
+    const ambient = new THREE.AmbientLight(0x404040, 0.6);
+    state.scene.add(ambient);
     
-    // Luz direcional (sol) - cria sombras
-    const sunLight = new THREE.DirectionalLight(
-        CONFIG.sunColor, 
-        CONFIG.sunIntensity
-    );
-    sunLight.position.set(10, 20, 10);
-    sunLight.castShadow = true;
+    const sun = new THREE.DirectionalLight(0xffffff, 1.2);
+    sun.position.set(10, 20, 10);
+    sun.castShadow = true;
+    sun.shadow.mapSize.set(2048, 2048);
+    state.scene.add(sun);
     
-    // Configurar sombras
-    sunLight.shadow.mapSize.width = 2048;
-    sunLight.shadow.mapSize.height = 2048;
-    sunLight.shadow.camera.near = 0.5;
-    sunLight.shadow.camera.far = 50;
-    sunLight.shadow.camera.left = -20;
-    sunLight.shadow.camera.right = 20;
-    sunLight.shadow.camera.top = 20;
-    sunLight.shadow.camera.bottom = -20;
-    
-    state.scene.add(sunLight);
-    
-    // Luz de preenchimento para suavizar sombras
-    const fillLight = new THREE.DirectionalLight(0x8888ff, 0.3);
-    fillLight.position.set(-10, 10, -10);
-    state.scene.add(fillLight);
+    const fill = new THREE.DirectionalLight(0x8888ff, 0.3);
+    fill.position.set(-10, 10, -10);
+    state.scene.add(fill);
 }
 
-// ============================================
-// CHÃO
-// ============================================
-
 function createGround() {
-    const geometry = new THREE.PlaneGeometry(100, 100);
-    const material = new THREE.MeshStandardMaterial({ 
-        color: CONFIG.groundColor,
+    const geo = new THREE.PlaneGeometry(100, 100);
+    const mat = new THREE.MeshStandardMaterial({ 
+        color: 0x2a2a3e,
         roughness: 0.8,
         metalness: 0.2
     });
-    
-    const ground = new THREE.Mesh(geometry, material);
-    ground.rotation.x = -Math.PI / 2; // Rotacionar para ficar plano
+    const ground = new THREE.Mesh(geo, mat);
+    ground.rotation.x = -Math.PI / 2;
     ground.receiveShadow = true;
     
-    // Grid helper para referência visual
-    const gridHelper = new THREE.GridHelper(100, 100, 0x444466, 0x2a2a3e);
+    const grid = new THREE.GridHelper(100, 100, 0x444466, 0x2a2a3e);
     
     state.scene.add(ground);
-    state.scene.add(gridHelper);
+    state.scene.add(grid);
 }
 
 // ============================================
-// CARREGAR PERSONAGEM
+// PERSONAGEM
 // ============================================
 
 function loadCharacter() {
     const loader = new GLTFLoader();
-    
     loader.load(
         'assets/anny.glb',
-        onCharacterLoad,
-        onLoadProgress,
-        onLoadError
+        (gltf) => {
+            state.character = gltf.scene;
+            state.character.traverse(c => {
+                if (c.isMesh) {
+                    c.castShadow = true;
+                    c.receiveShadow = true;
+                }
+            });
+            state.character.position.set(1, 1, 1);
+            state.scene.add(state.character);
+            
+            if (gltf.animations?.length) {
+                state.mixer = new THREE.AnimationMixer(state.character);
+                state.mixer.clipAction(gltf.animations[0]).play();
+            }
+            
+            state.isLoaded = true;
+        },
+        undefined,
+        (error) => {
+            console.log('Erro ao carregar, usando placeholder');
+            createPlaceholder();
+            state.isLoaded = true;
+        }
     );
 }
 
-function onCharacterLoad(gltf) {
-    state.character = gltf.scene;
-    
-    // Configurar sombras para todos os meshes do personagem
-    state.character.traverse((child) => {
-        if (child.isMesh) {
-            child.castShadow = true;
-            child.receiveShadow = true;
-        }
-    });
-    
-    // Posicionar personagem no centro
-    state.character.position.set(0, 0, 0);
-    
-    // Ajustar escala se necessário (ajuste conforme seu modelo)
-    state.character.scale.set(1, 1, 1);
-    
-    // Adicionar à cena
-    state.scene.add(state.character);
-    
-    // Configurar animações se existirem
-    if (gltf.animations && gltf.animations.length > 0) {
-        state.mixer = new THREE.AnimationMixer(state.character);
-        
-        // Tocar primeira animação (geralmente idle/walk)
-        const action = state.mixer.clipAction(gltf.animations[0]);
-        action.play();
-    }
-    
-    // Esconder loading e mostrar UI
-    document.getElementById('loading').style.display = 'none';
-    document.getElementById('ui').style.display = 'block';
-    
-    state.isLoaded = true;
-    console.log('✅ Anny carregada com sucesso!');
-}
-
-function onLoadProgress(xhr) {
-    const percent = (xhr.loaded / xhr.total * 100).toFixed(0);
-    console.log(`⏳ Carregando: ${percent}%`);
-}
-
-function onLoadError(error) {
-    console.error('❌ Erro ao carregar Anny:', error);
-    
-    // Criar personagem placeholder em caso de erro
-    createPlaceholderCharacter();
-    
-    document.getElementById('loading').innerHTML = `
-        <p style="color: #ff6666;">Erro ao carregar modelo</p>
-        <p style="font-size: 14px; color: #888;">Usando modelo placeholder</p>
-    `;
-    
-    setTimeout(() => {
-        document.getElementById('loading').style.display = 'none';
-        document.getElementById('ui').style.display = 'block';
-    }, 1500);
-}
-
-// ============================================
-// PERSONAGEM PLACEHOLDER (Fallback)
-// ============================================
-
-function createPlaceholderCharacter() {
-    // Criar um grupo para o personagem
+function createPlaceholder() {
     state.character = new THREE.Group();
     
-    // Corpo (cápsula)
-    const bodyGeometry = new THREE.CapsuleGeometry(0.5, 1.5, 4, 8);
-    const bodyMaterial = new THREE.MeshStandardMaterial({ 
+    const bodyMat = new THREE.MeshStandardMaterial({ 
         color: 0x00d4ff,
         roughness: 0.3,
         metalness: 0.5
     });
-    const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+    
+    const body = new THREE.Mesh(
+        new THREE.CapsuleGeometry(0.5, 1.5, 4, 8),
+        bodyMat
+    );
     body.position.y = 1.25;
     body.castShadow = true;
     
-    // Cabeça (esfera)
-    const headGeometry = new THREE.SphereGeometry(0.4, 16, 16);
-    const headMaterial = new THREE.MeshStandardMaterial({ 
-        color: 0xffdbac,
-        roughness: 0.5 
-    });
-    const head = new THREE.Mesh(headGeometry, headMaterial);
+    const head = new THREE.Mesh(
+        new THREE.SphereGeometry(0.4, 16, 16),
+        new THREE.MeshStandardMaterial({ color: 0xffdbac, roughness: 0.5 })
+    );
     head.position.y = 2.4;
     head.castShadow = true;
     
-    // Olhos
-    const eyeGeometry = new THREE.SphereGeometry(0.05, 8, 8);
-    const eyeMaterial = new THREE.MeshBasicMaterial({ color: 0x000000 });
-    
-    const leftEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
-    leftEye.position.set(-0.15, 2.45, 0.35);
-    
-    const rightEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
-    rightEye.position.set(0.15, 2.45, 0.35);
-    
-    // Adicionar partes ao grupo
     state.character.add(body);
     state.character.add(head);
-    state.character.add(leftEye);
-    state.character.add(rightEye);
-    
     state.scene.add(state.character);
-    state.isLoaded = true;
 }
 
 // ============================================
-// INPUT / CONTROLES
+// CONTROLES
 // ============================================
 
 function setupInput() {
-    // Keyboard events
-    window.addEventListener('keydown', (event) => {
-        const key = event.key.toLowerCase();
-        if (state.keys.hasOwnProperty(key)) {
-            state.keys[key] = true;
-        }
+    window.addEventListener('keydown', (e) => {
+        const k = e.key.toLowerCase();
+        if (state.keys.hasOwnProperty(k)) state.keys[k] = true;
     });
     
-    window.addEventListener('keyup', (event) => {
-        const key = event.key.toLowerCase();
-        if (state.keys.hasOwnProperty(key)) {
-            state.keys[key] = false;
-        }
+    window.addEventListener('keyup', (e) => {
+        const k = e.key.toLowerCase();
+        if (state.keys.hasOwnProperty(k)) state.keys[k] = false;
     });
 }
 
+function setupJoystick() {
+    const container = document.getElementById('joystick-container');
+    const knob = document.getElementById('joystick-knob');
+    
+    container.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        const touch = e.touches[0];
+        const rect = container.getBoundingClientRect();
+        
+        state.joystick.active = true;
+        state.joystick.originX = rect.left + rect.width / 2;
+        state.joystick.originY = rect.top + rect.height / 2;
+        state.joystick.currentX = touch.clientX;
+        state.joystick.currentY = touch.clientY;
+        
+        knob.classList.add('active');
+        updateJoystick(knob);
+    }, { passive: false });
+    
+    window.addEventListener('touchmove', (e) => {
+        if (!state.joystick.active) return;
+        
+        for (let t of e.touches) {
+            const rect = container.getBoundingClientRect();
+            const cx = rect.left + rect.width / 2;
+            const cy = rect.top + rect.height / 2;
+            
+            if (Math.hypot(t.clientX - cx, t.clientY - cy) < 100) {
+                state.joystick.currentX = t.clientX;
+                state.joystick.currentY = t.clientY;
+                updateJoystick(knob);
+                break;
+            }
+        }
+    }, { passive: false });
+    
+    window.addEventListener('touchend', () => {
+        if (!state.joystick.active) return;
+        state.joystick.active = false;
+        state.joystick.vector.set(0, 0);
+        knob.classList.remove('active');
+        knob.style.transform = `translate(-50%, -50%)`;
+    });
+}
+
+function updateJoystick(knob) {
+    const dx = state.joystick.currentX - state.joystick.originX;
+    const dy = state.joystick.currentY - state.joystick.originY;
+    const dist = Math.hypot(dx, dy);
+    const max = CONFIG.joystickMaxRadius;
+    const clamped = Math.min(dist, max);
+    const angle = Math.atan2(dy, dx);
+    
+    const x = Math.cos(angle) * clamped;
+    const y = Math.sin(angle) * clamped;
+    
+    knob.style.transform = `translate(-50%, -50%) translate(${x}px, ${y}px)`;
+    state.joystick.vector.set(x / max, y / max);
+}
+
 // ============================================
-// ATUALIZAÇÃO DO MOVIMENTO
+// GAME LOOP
 // ============================================
 
 function updateMovement() {
     if (!state.character || !state.isLoaded) return;
     
-    // Resetar direção
-    state.moveDirection.set(0, 0, 0);
+    const dir = new THREE.Vector3();
     
-    // Calcular vetor de movimento baseado nas teclas
-    if (state.keys.w) state.moveDirection.z -= 1;
-    if (state.keys.s) state.moveDirection.z += 1;
-    if (state.keys.a) state.moveDirection.x -= 1;
-    if (state.keys.d) state.moveDirection.x += 1;
+    // Teclado
+    if (state.keys.w) dir.z -= 1;
+    if (state.keys.s) dir.z += 1;
+    if (state.keys.a) dir.x -= 1;
+    if (state.keys.d) dir.x += 1;
     
-    // Normalizar para movimento diagonal não ser mais rápido
-    if (state.moveDirection.length() > 0) {
-        state.moveDirection.normalize();
+    // Joystick
+    if (state.joystick.active && state.joystick.vector.length() > 0.1) {
+        dir.x = state.joystick.vector.x;
+        dir.z = state.joystick.vector.y;
+    }
+    
+    if (dir.length() > 0) {
+        dir.normalize();
         
-        // Rotacionar personagem na direção do movimento
-        const targetRotation = Math.atan2(
-            state.moveDirection.x, 
-            state.moveDirection.z
-        );
+        const targetRot = Math.atan2(dir.x, dir.z);
+        let diff = targetRot - state.character.rotation.y;
         
-        // Interpolação suave da rotação (Lerp)
-        const currentRotation = state.character.rotation.y;
-        let rotationDiff = targetRotation - currentRotation;
+        while (diff > Math.PI) diff -= Math.PI * 2;
+        while (diff < -Math.PI) diff += Math.PI * 2;
         
-        // Ajustar para rotação mais curta
-        while (rotationDiff > Math.PI) rotationDiff -= Math.PI * 2;
-        while (rotationDiff < -Math.PI) rotationDiff += Math.PI * 2;
+        state.character.rotation.y += diff * CONFIG.rotationSpeed;
         
-        state.character.rotation.y += rotationDiff * CONFIG.rotationSpeed;
-        
-        // Mover personagem
-        const moveStep = state.moveDirection.clone().multiplyScalar(CONFIG.moveSpeed);
-        state.character.position.add(moveStep);
-        
-        // Atualizar animação se existir mixer
-        if (state.mixer) {
-            // Aqui você pode alternar entre animações de walk/idle
-            // Por simplicidade, mantemos a animação atual
-        }
+        const move = dir.multiplyScalar(CONFIG.moveSpeed);
+        state.character.position.add(move);
     }
 }
 
-// ============================================
-// ATUALIZAÇÃO DA CÂMERA (Third Person)
-// ============================================
-
 function updateCamera() {
-    if (!state.character || !state.isLoaded) return;
+    if (!state.character) return;
     
-    // Calcular posição ideal da câmera atrás do personagem
-    const characterPos = state.character.position.clone();
-    
-    // Offset da câmera (atrás e acima)
+    const pos = state.character.position.clone();
     const offset = new THREE.Vector3(0, CONFIG.cameraHeight, CONFIG.cameraDistance);
-    
-    // Aplicar rotação do personagem ao offset (câmera segue por trás)
     offset.applyAxisAngle(new THREE.Vector3(0, 0, 0), state.character.rotation.y);
     
-    // Posição alvo da câmera
-    state.targetCameraPosition.copy(characterPos).add(offset);
-    
-    // Suavizar movimento da câmera (Lerp)
-    state.camera.position.lerp(state.targetCameraPosition, CONFIG.cameraSmoothness);
-    
-    // Olhar para o personagem
-    state.camera.lookAt(
-        characterPos.x,
-        characterPos.y + 1.5, // Olhar para a altura do peito/cabeça
-        characterPos.z
-    );
+    const target = pos.clone().add(offset);
+    state.camera.position.lerp(target, CONFIG.cameraSmoothness);
+    state.camera.lookAt(pos.x, pos.y + 1.5, pos.z);
 }
-
-// ============================================
-// LOOP PRINCIPAL
-// ============================================
 
 function animate() {
     requestAnimationFrame(animate);
     
-    // Atualizar mixer de animação
-    if (state.mixer) {
-        state.mixer.update(0.016); // ~60fps
-    }
+    if (state.mixer) state.mixer.update(0.016);
     
-    // Atualizar movimento do personagem
     updateMovement();
-    
-    // Atualizar posição da câmera
     updateCamera();
     
-    // Renderizar cena
     state.renderer.render(state.scene, state.camera);
 }
 
-// ============================================
-// UTILITÁRIOS
-// ============================================
-
 function onWindowResize() {
-    // Atualizar aspect ratio da câmera
     state.camera.aspect = window.innerWidth / window.innerHeight;
     state.camera.updateProjectionMatrix();
-    
-    // Atualizar tamanho do renderer
     state.renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
 // ============================================
-// INICIAR APLICAÇÃO
+// START
 // ============================================
 
-// Aguardar DOM carregar
 document.addEventListener('DOMContentLoaded', init);

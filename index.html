@@ -2,94 +2,36 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Anny 3D - Three.js</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            overflow: hidden;
-            background-color: #1a1a2e;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        
-        #canvas-container {
-            width: 100vw;
-            height: 100vh;
-        }
-        
-        #ui {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            color: white;
-            background: rgba(0, 0, 0, 0.7);
-            padding: 20px;
-            border-radius: 10px;
-            pointer-events: none;
-            user-select: none;
-        }
-        
-        #ui h1 {
-            font-size: 24px;
-            margin-bottom: 10px;
-            color: #00d4ff;
-        }
-        
-        #ui p {
-            font-size: 14px;
-            line-height: 1.6;
-            color: #ccc;
-        }
-        
-        .key {
-            display: inline-block;
-            background: #333;
-            padding: 2px 8px;
-            border-radius: 4px;
-            border: 1px solid #555;
-            margin: 0 2px;
-            font-family: monospace;
-            color: #fff;
-        }
-        
-        #loading {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            color: white;
-            font-size: 24px;
-            text-align: center;
-        }
-        
-        .spinner {
-            width: 50px;
-            height: 50px;
-            border: 5px solid #333;
-            border-top: 5px solid #00d4ff;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 20px;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div id="loading">
-        <div class="spinner"></div>
-        <p>Carregando Anny...</p>
+    <!-- TELA DE LOADING -->
+    <div id="loading-screen">
+        <div class="cover-container">
+            <img src="assets/anny.png" alt="Anny" class="cover-image" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+            <div class="cover-placeholder" style="display: none;">👾</div>
+        </div>
+        
+        <h1 class="game-title">ANNY</h1>
+        <p class="game-subtitle">Aventura 3D</p>
+        
+        <div class="progress-container">
+            <div class="loading-percent" id="loading-percent">0%</div>
+            <div class="progress-bar" id="progress-bar"></div>
+        </div>
+        
+        <div class="loading-status" id="loading-status">Inicializando...</div>
+        
+        <div class="controls-hint">
+            <span id="desktop-hint">WASD para mover • Mouse para câmera</span>
+            <span id="mobile-hint" style="display: none;">Joystick para mover</span>
+        </div>
     </div>
     
-    <div id="ui" style="display: none;">
+    <!-- INTERFACE DO JOGO -->
+    <div id="ui">
         <h1>🎮 Anny 3D</h1>
         <p>
             Use <span class="key">W</span><span class="key">A</span><span class="key">S</span><span class="key">D</span> para mover<br>
@@ -98,9 +40,20 @@
         </p>
     </div>
     
+    <!-- JOYSTICK MOBILE -->
+    <div id="joystick-container">
+        <div class="joystick-base">
+            <div class="joystick-direction"></div>
+        </div>
+        <div class="joystick-knob" id="joystick-knob"></div>
+    </div>
+    
+    <div id="action-button"></div>
+    
+    <!-- CANVAS THREE.JS -->
     <div id="canvas-container"></div>
 
-    <!-- Import map para Three.js -->
+    <!-- IMPORT MAP -->
     <script type="importmap">
         {
             "imports": {
@@ -110,7 +63,7 @@
         }
     </script>
 
-    <!-- Script principal -->
+    <!-- SCRIPT PRINCIPAL -->
     <script type="module" src="main.js"></script>
 </body>
 </html>
