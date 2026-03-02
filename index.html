@@ -2,77 +2,87 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Anny 3D - Three.js</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Anny 3D - Otimizado</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        /* Forçar landscape no mobile */
+        @media (orientation: portrait) {
+            body::after {
+                content: "Por favor, gire o dispositivo";
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: #000;
+                color: white;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 10000;
+                font-size: 24px;
+                text-align: center;
+                padding: 20px;
+            }
+        }
+    </style>
 </head>
 <body>
     <!-- TELA DE LOADING -->
     <div id="loading-screen">
         <div class="cover-container">
-            <img src="assets/anny.png" alt="Anny" class="cover-image" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-            <div class="cover-placeholder" style="display: none;">👾</div>
+            <!-- VOLTAR PARA PNG (mais leve) -->
+            <img src="assets/anny.png" alt="Anny" class="cover-image" loading="eager">
         </div>
         
         <h1 class="game-title">ANNY</h1>
         <p class="game-subtitle">Aventura 3D</p>
         
-        <!-- Área de loading e botão -->
+        <!-- Área de loading -->
         <div class="loading-content">
-            <!-- Barra de progresso (visível durante carregamento) -->
             <div class="progress-container" id="progress-container">
                 <div class="loading-percent" id="loading-percent">0%</div>
                 <div class="progress-bar" id="progress-bar"></div>
             </div>
             
-            <!-- Status de carregamento -->
             <div class="loading-status" id="loading-status">Inicializando...</div>
-            
-            <!-- Botão INICIAR (aparece após carregar) -->
             <button class="start-button" id="start-button">INICIAR</button>
         </div>
         
         <!-- Dicas de controles -->
         <div class="controls-hint" id="controls-hint">
-            <span id="desktop-hint">WASD para mover • Mouse para câmera</span>
-            <span id="mobile-hint" style="display: none;">Joystick para mover</span>
+            <span id="desktop-hint">WASD • Mouse arrasta • Scroll zoom</span>
+            <span id="mobile-hint" style="display: none;">Joystick • Arrastar • Pinça</span>
         </div>
     </div>
     
-    <!-- INTERFACE DO JOGO -->
+    <!-- UI -->
     <div id="ui">
-        <h1>🎮 Anny 3D</h1>
-        <p>
-            Use <span class="key">W</span><span class="key">A</span><span class="key">S</span><span class="key">D</span> para mover<br>
-            Mouse para rotar a câmera<br>
-            Scroll para zoom
-        </p>
+        <h1>🎮 Anny</h1>
+        <p class="desktop-only">WASD | Mouse | Scroll</p>
+        <p class="mobile-hint-ui" style="display: none;">👆 Joystick + Arrastar</p>
     </div>
     
-    <!-- JOYSTICK MOBILE -->
+    <!-- JOYSTICK -->
     <div id="joystick-container">
-        <div class="joystick-base">
-            <div class="joystick-direction"></div>
-        </div>
+        <div class="joystick-base"></div>
         <div class="joystick-knob" id="joystick-knob"></div>
     </div>
     
-    <div id="action-button"></div>
-    
-    <!-- CANVAS THREE.JS -->
+    <!-- CANVAS -->
     <div id="canvas-container"></div>
 
     <!-- IMPORT MAP -->
     <script type="importmap">
         {
             "imports": {
-                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+                "three": "https://unpkg.com/three@0.128.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.128.0/examples/jsm/"
             }
         }
     </script>
 
-    <!-- SCRIPT PRINCIPAL -->
     <script type="module" src="main.js"></script>
 </body>
 </html>

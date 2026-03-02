@@ -3,45 +3,43 @@
     padding: 0;
     box-sizing: border-box;
     touch-action: none;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
 }
 
 body {
     overflow: hidden;
-    background-color: #1a1a2e;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #0f0f1a;
+    font-family: 'Segoe UI', sans-serif;
     position: fixed;
     width: 100%;
     height: 100%;
+    color: white;
 }
 
 #canvas-container {
     width: 100vw;
     height: 100vh;
     opacity: 0;
-    transition: opacity 0.8s ease-out;
+    transition: opacity 0.5s;
 }
 
-#canvas-container.loaded {
-    opacity: 1;
-}
+#canvas-container.loaded { opacity: 1; }
 
-/* ============================================
-   TELA DE LOADING
-   ============================================ */
-
+/* LOADING */
 #loading-screen {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: linear-gradient(135deg, #0f0f1e 0%, #1a1a2e 50%, #16213e 100%);
+    background: linear-gradient(135deg, #0f0f1e, #1a1a2e);
     z-index: 1000;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    transition: opacity 0.6s ease-out, visibility 0.6s ease-out;
+    transition: opacity 0.4s;
 }
 
 #loading-screen.hidden {
@@ -51,177 +49,106 @@ body {
 }
 
 .cover-container {
-    position: relative;
-    width: 280px;
-    height: 280px;
-    margin-bottom: 40px;
-    border-radius: 20px;
+    width: 200px;
+    height: 200px;
+    margin-bottom: 30px;
+    border-radius: 16px;
     overflow: hidden;
-    box-shadow: 
-        0 20px 60px rgba(0, 0, 0, 0.5),
-        0 0 0 1px rgba(255, 255, 255, 0.1),
-        0 0 40px rgba(0, 212, 255, 0.15);
-    animation: float 6s ease-in-out infinite;
-}
-
-@keyframes float {
-    0%, 100% { transform: translateY(0px); }
-    50% { transform: translateY(-10px); }
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
 }
 
 .cover-image {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    display: block;
-}
-
-.cover-placeholder {
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(135deg, #00d4ff 0%, #7b2cbf 100%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 72px;
-    color: white;
-    text-shadow: 0 4px 20px rgba(0,0,0,0.3);
-}
-
-.cover-container::after {
-    content: '';
-    position: absolute;
-    top: -2px;
-    left: -2px;
-    right: -2px;
-    bottom: -2px;
-    background: linear-gradient(45deg, #00d4ff, #7b2cbf, #00d4ff);
-    border-radius: 22px;
-    z-index: -1;
-    opacity: 0.5;
-    animation: glow 3s ease-in-out infinite alternate;
-}
-
-@keyframes glow {
-    from { opacity: 0.3; filter: blur(5px); }
-    to { opacity: 0.6; filter: blur(10px); }
 }
 
 .game-title {
-    font-size: 42px;
+    font-size: 36px;
     font-weight: 700;
-    margin-bottom: 10px;
-    text-shadow: 0 0 30px rgba(0, 212, 255, 0.5);
-    letter-spacing: 2px;
-    background: linear-gradient(135deg, #00d4ff 0%, #ffffff 50%, #00d4ff 100%);
+    margin-bottom: 5px;
+    background: linear-gradient(135deg, #00d4ff, #fff);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
-    background-clip: text;
 }
 
 .game-subtitle {
-    font-size: 14px;
+    font-size: 12px;
     color: #888;
-    margin-bottom: 40px;
-    letter-spacing: 4px;
-    text-transform: uppercase;
+    margin-bottom: 30px;
+    letter-spacing: 3px;
 }
 
-/* ============================================
-   PROGRESSO E BOTÃO INICIAR
-   ============================================ */
-
+/* PROGRESSO */
 .loading-content {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 20px;
-    min-height: 80px;
+    gap: 15px;
+    width: 250px;
 }
 
 .progress-container {
-    width: 300px;
-    height: 4px;
-    background: rgba(255, 255, 255, 0.1);
+    width: 100%;
+    height: 3px;
+    background: rgba(255,255,255,0.1);
     border-radius: 2px;
     overflow: hidden;
     position: relative;
-    transition: opacity 0.3s ease;
 }
 
-.progress-container.hidden {
-    opacity: 0;
-    pointer-events: none;
-}
+.progress-container.hidden { opacity: 0; }
 
 .progress-bar {
     height: 100%;
     width: 0%;
-    background: linear-gradient(90deg, #00d4ff 0%, #7b2cbf 100%);
-    border-radius: 2px;
-    transition: width 0.3s ease-out;
-    box-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+    background: linear-gradient(90deg, #00d4ff, #7b2cbf);
+    transition: width 0.3s;
 }
 
 .loading-percent {
     position: absolute;
     right: 0;
-    top: -25px;
-    font-size: 12px;
+    top: -20px;
+    font-size: 11px;
     color: #00d4ff;
-    font-weight: 600;
 }
 
 .loading-status {
-    font-size: 13px;
-    color: #666;
-    letter-spacing: 1px;
+    font-size: 12px;
+    color: #aaa;
     display: flex;
     align-items: center;
-    gap: 8px;
-    transition: opacity 0.3s ease;
-}
-
-.loading-status.hidden {
-    opacity: 0;
+    gap: 6px;
 }
 
 .loading-status::before {
     content: '';
-    width: 8px;
-    height: 8px;
+    width: 6px;
+    height: 6px;
     border: 2px solid #00d4ff;
     border-top-color: transparent;
     border-radius: 50%;
-    animation: spin 1s linear infinite;
+    animation: spin 0.8s linear infinite;
 }
 
-.loading-status.complete::before {
-    display: none;
-}
+.loading-status.complete::before { display: none; }
 
-@keyframes spin {
-    to { transform: rotate(360deg); }
-}
+@keyframes spin { to { transform: rotate(360deg); } }
 
-/* BOTÃO INICIAR */
+/* BOTÃO */
 .start-button {
-    padding: 16px 48px;
-    font-size: 18px;
-    font-weight: 700;
+    padding: 12px 40px;
+    font-size: 16px;
+    font-weight: 600;
     color: #0f0f1e;
-    background: linear-gradient(135deg, #00d4ff 0%, #7b2cbf 100%);
+    background: linear-gradient(135deg, #00d4ff, #7b2cbf);
     border: none;
-    border-radius: 50px;
+    border-radius: 40px;
     cursor: pointer;
-    text-transform: uppercase;
-    letter-spacing: 3px;
-    box-shadow: 
-        0 10px 30px rgba(0, 212, 255, 0.3),
-        0 0 0 2px rgba(255, 255, 255, 0.1);
-    transition: all 0.3s ease;
+    letter-spacing: 2px;
     opacity: 0;
-    transform: scale(0.8) translateY(20px);
+    transform: scale(0.8);
     pointer-events: none;
     display: none;
 }
@@ -229,227 +156,89 @@ body {
 .start-button.visible {
     display: block;
     opacity: 1;
-    transform: scale(1) translateY(0);
+    transform: scale(1);
     pointer-events: auto;
-    animation: pulse 2s ease-in-out infinite;
 }
 
-.start-button:hover {
-    transform: scale(1.05) translateY(-2px);
-    box-shadow: 
-        0 15px 40px rgba(0, 212, 255, 0.4),
-        0 0 0 2px rgba(255, 255, 255, 0.2);
-}
-
-.start-button:active {
-    transform: scale(0.98);
-}
-
-@keyframes pulse {
-    0%, 100% { box-shadow: 0 10px 30px rgba(0, 212, 255, 0.3), 0 0 0 2px rgba(255, 255, 255, 0.1); }
-    50% { box-shadow: 0 10px 40px rgba(0, 212, 255, 0.5), 0 0 20px rgba(0, 212, 255, 0.3), 0 0 0 2px rgba(255, 255, 255, 0.2); }
-}
-
-/* ============================================
-   UI DO JOGO
-   ============================================ */
-
+/* UI */
 #ui {
     position: absolute;
-    top: 20px;
-    left: 20px;
-    color: white;
-    background: rgba(0, 0, 0, 0.7);
-    padding: 20px;
-    border-radius: 10px;
-    pointer-events: none;
-    user-select: none;
-    z-index: 10;
+    top: 15px;
+    left: 15px;
+    background: rgba(0,0,0,0.5);
+    backdrop-filter: blur(5px);
+    padding: 12px 18px;
+    border-radius: 8px;
     opacity: 0;
-    transform: translateY(-20px);
-    transition: all 0.5s ease-out 0.3s;
+    transition: opacity 0.3s;
+    font-size: 13px;
+    border: 1px solid rgba(255,255,255,0.1);
 }
 
-#ui.visible {
-    opacity: 1;
-    transform: translateY(0);
-}
+#ui.visible { opacity: 1; }
+#ui h1 { font-size: 18px; color: #00d4ff; margin-bottom: 5px; }
 
-#ui h1 {
-    font-size: 24px;
-    margin-bottom: 10px;
-    color: #00d4ff;
-}
-
-#ui p {
-    font-size: 14px;
-    line-height: 1.6;
-    color: #ccc;
-}
-
-.key {
-    display: inline-block;
-    background: #333;
-    padding: 2px 8px;
-    border-radius: 4px;
-    border: 1px solid #555;
-    margin: 0 2px;
-    font-family: monospace;
-    color: #fff;
-}
-
-@media (pointer: coarse) {
-    #ui p {
-        display: none;
-    }
-    #ui h1 {
-        margin-bottom: 0;
-    }
-    #ui::after {
-        content: "Use o joystick para mover";
-        font-size: 12px;
-        color: #888;
-        display: block;
-        margin-top: 8px;
-    }
-}
-
-.controls-hint {
-    position: absolute;
-    bottom: 40px;
-    font-size: 12px;
-    color: #555;
-    text-align: center;
-    line-height: 1.6;
-    max-width: 80%;
-    transition: opacity 0.3s ease;
-}
-
-.controls-hint.hidden {
-    opacity: 0;
-}
-
-/* ============================================
-   JOYSTICK MOBILE
-   ============================================ */
-
+/* JOYSTICK */
 #joystick-container {
     position: absolute;
-    bottom: 40px;
-    left: 40px;
-    width: 120px;
-    height: 120px;
+    bottom: 30px;
+    left: 30px;
+    width: 100px;
+    height: 100px;
     display: none;
     z-index: 50;
-    pointer-events: auto;
 }
 
-@media (pointer: coarse) {
-    #joystick-container {
-        display: block;
-    }
-}
+@media (pointer: coarse) { #joystick-container { display: block; } }
 
 .joystick-base {
     position: absolute;
     width: 100%;
     height: 100%;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.08);
-    border: 2px solid rgba(255, 255, 255, 0.15);
+    background: rgba(30,30,40,0.6);
+    border: 2px solid rgba(255,255,255,0.1);
     backdrop-filter: blur(4px);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
 }
 
 .joystick-knob {
     position: absolute;
-    width: 50px;
-    height: 50px;
+    width: 45px;
+    height: 45px;
     border-radius: 50%;
-    background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.3), rgba(255,255,255,0.1));
-    border: 2px solid rgba(0, 212, 255, 0.6);
-    box-shadow: 
-        0 0 20px rgba(0, 212, 255, 0.4),
-        inset 0 2px 4px rgba(255,255,255,0.2);
+    background: rgba(0,212,255,0.4);
+    border: 2px solid #00d4ff;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    transition: transform 0.1s ease-out;
+    transition: transform 0.05s;
     pointer-events: none;
 }
 
-.joystick-knob.active {
-    background: radial-gradient(circle at 30% 30%, rgba(0,212,255,0.4), rgba(0,212,255,0.2));
-    border-color: rgba(0, 212, 255, 0.9);
-    box-shadow: 
-        0 0 30px rgba(0, 212, 255, 0.6),
-        inset 0 2px 4px rgba(255,255,255,0.3);
-}
+.joystick-knob.active { background: rgba(0,212,255,0.6); }
 
-.joystick-direction {
+/* CONTROLS HINT */
+.controls-hint {
     position: absolute;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
+    bottom: 20px;
+    font-size: 11px;
+    color: #666;
+    background: rgba(0,0,0,0.3);
+    padding: 6px 15px;
+    border-radius: 20px;
 }
 
-.joystick-direction::before,
-.joystick-direction::after {
-    content: '';
-    position: absolute;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 2px;
+/* MOBILE HINT */
+.mobile-hint-ui {
+    font-size: 11px;
+    color: #aaa;
+    margin-top: 5px;
 }
 
-.joystick-direction::before {
-    width: 2px;
-    height: 30%;
-    left: 50%;
-    top: 10%;
-    transform: translateX(-50%);
-}
-
-.joystick-direction::after {
-    width: 30%;
-    height: 2px;
-    top: 50%;
-    left: 10%;
-    transform: translateY(-50%);
-}
-
-#action-button {
-    position: absolute;
-    bottom: 60px;
-    right: 60px;
-    width: 70px;
-    height: 70px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.08);
-    border: 2px solid rgba(255, 255, 255, 0.15);
-    backdrop-filter: blur(4px);
-    display: none;
-    z-index: 50;
-    touch-action: manipulation;
-}
-
-@media (pointer: coarse) {
-    #action-button {
-        display: block;
-    }
-}
-
-#action-button:active {
-    background: rgba(0, 212, 255, 0.2);
-    border-color: rgba(0, 212, 255, 0.5);
-    transform: scale(0.95);
-}
-
-#action-button::after {
-    content: '●';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    color: rgba(255, 255, 255, 0.6);
-    font-size: 24px;
+/* RESPONSIVO */
+@media (max-width: 600px) {
+    .cover-container { width: 160px; height: 160px; }
+    .game-title { font-size: 28px; }
+    #ui { padding: 8px 12px; font-size: 11px; }
+    #ui h1 { font-size: 14px; }
 }

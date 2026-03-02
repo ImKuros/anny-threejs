@@ -1,25 +1,41 @@
 // ============================================
-// ANNY 3D - Three.js Character Controller
+// ANNY 3D - VERSÃO OTIMIZADA
 // ============================================
 
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 // ============================================
-// CONFIGURAÇÕES
+// CONFIGURAÇÕES OTIMIZADAS
 // ============================================
 
 const CONFIG = {
-    moveSpeed: 0.1,
-    rotationSpeed: 0.15,
+    // Movimento
+    moveSpeed: 0.15,
+    rotationSpeed: 0.2,
+    
+    // Câmera
+    cameraDistance: 6,
     cameraHeight: 3,
-    cameraDistance: 5,
-    cameraSmoothness: 0.1,
-    joystickMaxRadius: 35
+    cameraSmoothness: 0.15,
+    cameraMinDistance: 3,
+    cameraMaxDistance: 10,
+    
+    // Rotação
+    cameraRotSpeed: 0.005,
+    cameraRotSmoothness: 0.15,
+    
+    // Joystick
+    joystickMaxRadius: 35,
+    
+    // Qualidade (reduzida para performance)
+    shadowMapSize: 1024,
+    grassCount: 50,
+    textureSize: 256
 };
 
 // ============================================
-// ESTADO
+// ESTADO SIMPLIFICADO
 // ============================================
 
 const state = {
@@ -30,21 +46,26 @@ const state = {
     character: null,
     mixer: null,
     isLoaded: false,
-    isTouchDevice: false,
+    isTouch: ('ontouchstart' in window) || (navigator.maxTouchPoints > 0),
     gameStarted: false,
     
-    joystick: {
-        active: false,
-        originX: 0,
-        originY: 0,
-        currentX: 0,
-        currentY: 0,
-        vector: new THREE.Vector2(0, 0)
-    }
+    // Câmera
+    cameraZoom: CONFIG.cameraDistance,
+    targetZoom: CONFIG.cameraDistance,
+    camAngle: { h: 0, v: 0.4, targetH: 0, targetV: 0.4 },
+    
+    // Joystick
+    joystick: { active: false, x: 0, y: 0, vec: new THREE.Vector2() },
+    
+    // Drag
+    drag: { active: false, lastX: 0, lastY: 0 },
+    
+    // Clock
+    clock: new THREE.Clock()
 };
 
 // ============================================
-// LOADING MANAGER COM BOTÃO INICIAR
+// LOADING MANAGER
 // ============================================
 
 const loadingManager = {
@@ -56,45 +77,36 @@ const loadingManager = {
     screen: document.getElementById('loading-screen'),
     canvas: document.getElementById('canvas-container'),
     ui: document.getElementById('ui'),
-    controlsHint: document.getElementById('controls-hint'),
     
     update(progress, status) {
-        this.progressBar.style.width = progress + '%';
-        this.percentText.textContent = Math.floor(progress) + '%';
-        if (status) this.statusText.textContent = status;
+        if (this.progressBar) this.progressBar.style.width = progress + '%';
+        if (this.percentText) this.percentText.textContent = Math.floor(progress) + '%';
+        if (status && this.statusText) this.statusText.textContent = status;
     },
     
-    // Mostra botão de iniciar quando carregar
     showStartButton() {
-        this.update(100, 'Pronto para jogar!');
-        this.statusText.classList.add('complete');
+        this.update(100, 'Pronto!');
+        if (this.statusText) this.statusText.classList.add('complete');
         
-        // Esconder barra de progresso
         setTimeout(() => {
-            this.progressContainer.classList.add('hidden');
-            this.statusText.classList.add('hidden');
-            this.controlsHint.classList.add('hidden');
-            
-            // Mostrar botão com animação
+            if (this.progressContainer) this.progressContainer.classList.add('hidden');
+            if (this.statusText) this.statusText.classList.add('hidden');
             setTimeout(() => {
-                this.startButton.classList.add('visible');
-            }, 300);
-        }, 500);
+                if (this.startButton) this.startButton.classList.add('visible');
+            }, 200);
+        }, 400);
     },
     
-    // Inicia o jogo quando clicar no botão
     startGame() {
-        this.startButton.textContent = 'CARREGANDO...';
-        
+        if (this.startButton) this.startButton.textContent = '▶';
         setTimeout(() => {
-            this.screen.classList.add('hidden');
-            this.canvas.classList.add('loaded');
-            
+            if (this.screen) this.screen.classList.add('hidden');
+            if (this.canvas) this.canvas.classList.add('loaded');
             setTimeout(() => {
-                this.ui.classList.add('visible');
+                if (this.ui) this.ui.classList.add('visible');
                 state.gameStarted = true;
-            }, 300);
-        }, 200);
+            }, 200);
+        }, 100);
     }
 };
 
@@ -103,49 +115,53 @@ const loadingManager = {
 // ============================================
 
 function init() {
-    state.isTouchDevice = window.matchMedia('(pointer: coarse)').matches;
-    
-    if (state.isTouchDevice) {
-        document.getElementById('desktop-hint').style.display = 'none';
-        document.getElementById('mobile-hint').style.display = 'inline';
+    // Detectar mobile
+    if (state.isTouch) {
+        const dh = document.getElementById('desktop-hint');
+        const mh = document.getElementById('mobile-hint');
+        const mu = document.querySelector('.mobile-hint-ui');
+        if (dh) dh.style.display = 'none';
+        if (mh) mh.style.display = 'inline';
+        if (mu) mu.style.display = 'block';
     }
     
-    // Configurar botão de iniciar
-    loadingManager.startButton.addEventListener('click', () => {
-        loadingManager.startGame();
-    });
+    // Botão iniciar
+    if (loadingManager.startButton) {
+        loadingManager.startButton.addEventListener('click', () => loadingManager.startGame());
+    }
     
+    // Simular loading rápido
     simulateLoading();
 }
 
 function simulateLoading() {
     const steps = [
-        { progress: 15, status: 'Carregando recursos...', delay: 400 },
-        { progress: 35, status: 'Inicializando gráficos...', delay: 500 },
-        { progress: 55, status: 'Construindo mundo 3D...', delay: 600 },
-        { progress: 75, status: 'Carregando personagem...', delay: 700 },
-        { progress: 90, status: 'Finalizando...', delay: 500 },
-        { progress: 100, status: 'Pronto!', delay: 300 }
+        { p: 20, s: 'Recursos...', d: 100 },
+        { p: 40, s: 'Gráficos...', d: 150 },
+        { p: 60, s: 'Mundo 3D...', d: 150 },
+        { p: 80, s: 'Personagem...', d: 200 },
+        { p: 95, s: 'Quase lá...', d: 150 }
     ];
     
-    let current = 0;
-    
+    let i = 0;
     function next() {
-        if (current >= steps.length) {
-            // Carregar Three.js em paralelo
+        if (i >= steps.length) {
             startThreeJS();
             return;
         }
-        const step = steps[current];
+        const s = steps[i];
         setTimeout(() => {
-            loadingManager.update(step.progress, step.status);
-            current++;
+            loadingManager.update(s.p, s.s);
+            i++;
             next();
-        }, step.delay);
+        }, s.d);
     }
-    
     next();
 }
+
+// ============================================
+// THREE.JS OTIMIZADO
+// ============================================
 
 function startThreeJS() {
     createScene();
@@ -153,16 +169,16 @@ function startThreeJS() {
     createRenderer();
     createLighting();
     createGround();
-    setupInput();
+    setupControls();
     
-    if (state.isTouchDevice) setupJoystick();
+    if (state.isTouch) setupJoystick();
     
     loadCharacter();
     animate();
     
-    window.addEventListener('resize', onWindowResize);
+    window.addEventListener('resize', onResize);
     
-    // Quando personagem carregar, mostrar botão
+    // Verificar carregamento
     const check = setInterval(() => {
         if (state.isLoaded) {
             clearInterval(check);
@@ -171,70 +187,110 @@ function startThreeJS() {
     }, 100);
 }
 
-// ============================================
-// THREE.JS
-// ============================================
-
 function createScene() {
     state.scene = new THREE.Scene();
-    state.scene.background = new THREE.Color(0x1a1a2e);
-    state.scene.fog = new THREE.Fog(0x1a1a2e, 10, 50);
+    state.scene.background = new THREE.Color(0x87CEEB);
+    state.scene.fog = new THREE.Fog(0x87CEEB, 15, 40);
 }
 
 function createCamera() {
-    state.camera = new THREE.PerspectiveCamera(
-        75,
-        window.innerWidth / window.innerHeight,
-        0.1,
-        1000
-    );
-    state.camera.position.set(0, CONFIG.cameraHeight, CONFIG.cameraDistance);
+    state.camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 1000);
 }
 
 function createRenderer() {
-    state.renderer = new THREE.WebGLRenderer({ antialias: true });
+    state.renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
     state.renderer.setSize(window.innerWidth, window.innerHeight);
-    state.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    state.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+    
     state.renderer.shadowMap.enabled = true;
     state.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     
     document.getElementById('canvas-container').appendChild(state.renderer.domElement);
 }
 
+// ============================================
+// ILUMINAÇÃO SIMPLIFICADA
+// ============================================
+
 function createLighting() {
-    const ambient = new THREE.AmbientLight(0x404040, 0.6);
+    const ambient = new THREE.AmbientLight(0x404060, 0.7);
     state.scene.add(ambient);
     
-    const sun = new THREE.DirectionalLight(0xffffff, 1.2);
-    sun.position.set(1, 1, 1);
+    const sun = new THREE.DirectionalLight(0xfff5d1, 1.0);
+    sun.position.set(10, 20, 5);
     sun.castShadow = true;
-    sun.shadow.mapSize.set(2048, 2048);
+    sun.shadow.mapSize.width = CONFIG.shadowMapSize;
+    sun.shadow.mapSize.height = CONFIG.shadowMapSize;
+    sun.shadow.camera.near = 0.5;
+    sun.shadow.camera.far = 40;
+    sun.shadow.camera.left = -15;
+    sun.shadow.camera.right = 15;
+    sun.shadow.camera.top = 15;
+    sun.shadow.camera.bottom = -15;
     state.scene.add(sun);
     
-    const fill = new THREE.DirectionalLight(0x8888ff, 0.3);
+    const fill = new THREE.DirectionalLight(0x8888ff, 0.2);
     fill.position.set(-10, 10, -10);
     state.scene.add(fill);
 }
 
+// ============================================
+// CHÃO OTIMIZADO
+// ============================================
+
 function createGround() {
-    const geo = new THREE.PlaneGeometry(100, 100);
-    const mat = new THREE.MeshStandardMaterial({ 
-        color: 0x2a2a3e,
-        roughness: 0.8,
-        metalness: 0.2
-    });
+    const canvas = document.createElement('canvas');
+    canvas.width = CONFIG.textureSize;
+    canvas.height = CONFIG.textureSize;
+    const ctx = canvas.getContext('2d');
+    
+    ctx.fillStyle = '#3a7a3a';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    for (let i = 0; i < 500; i++) {
+        const x = Math.random() * canvas.width;
+        const y = Math.random() * canvas.height;
+        ctx.fillStyle = `rgba(30, 60, 30, ${0.2 + Math.random() * 0.3})`;
+        ctx.fillRect(x, y, 2, 4);
+    }
+    
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.wrapS = THREE.RepeatWrapping;
+    texture.wrapT = THREE.RepeatWrapping;
+    texture.repeat.set(10, 10);
+    
+    const geo = new THREE.CircleGeometry(50, 32);
+    const mat = new THREE.MeshStandardMaterial({ map: texture, roughness: 0.9 });
     const ground = new THREE.Mesh(geo, mat);
     ground.rotation.x = -Math.PI / 2;
+    ground.position.y = 0;
     ground.receiveShadow = true;
-    
-    const grid = new THREE.GridHelper(100, 100, 0x444466, 0x2a2a3e);
-    
     state.scene.add(ground);
-    state.scene.add(grid);
+    
+    // Grama mínima
+    if (!state.isTouch) {
+        for (let i = 0; i < CONFIG.grassCount; i++) {
+            const blade = new THREE.Mesh(
+                new THREE.PlaneGeometry(0.1, 0.2),
+                new THREE.MeshStandardMaterial({ color: 0x3a7a3a, side: THREE.DoubleSide })
+            );
+            
+            const a = Math.random() * Math.PI * 2;
+            const r = 3 + Math.random() * 25;
+            blade.position.set(Math.cos(a) * r, 0.1, Math.sin(a) * r);
+            blade.rotation.y = Math.random() * Math.PI;
+            blade.rotation.x = -0.2;
+            
+            blade.castShadow = false;
+            blade.receiveShadow = false;
+            
+            state.scene.add(blade);
+        }
+    }
 }
 
 // ============================================
-// PERSONAGEM
+// PERSONAGEM (POSIÇÃO INICIAL 1,1,1)
 // ============================================
 
 function loadCharacter() {
@@ -247,9 +303,21 @@ function loadCharacter() {
                 if (c.isMesh) {
                     c.castShadow = true;
                     c.receiveShadow = true;
+                    if (c.material) {
+                        if (Array.isArray(c.material)) {
+                            c.material.forEach(m => { m.roughness = 0.5; m.metalness = 0; });
+                        } else {
+                            c.material.roughness = 0.5;
+                            c.material.metalness = 0;
+                        }
+                    }
                 }
             });
+            
+            // POSIÇÃO INICIAL (1, 1, 1)
             state.character.position.set(1, 1, 1);
+            state.character.rotation.y = 0;
+            
             state.scene.add(state.character);
             
             if (gltf.animations?.length) {
@@ -259,9 +327,8 @@ function loadCharacter() {
             
             state.isLoaded = true;
         },
-        undefined,
-        (error) => {
-            console.log('Erro ao carregar, usando placeholder');
+        null,
+        () => {
             createPlaceholder();
             state.isLoaded = true;
         }
@@ -271,28 +338,25 @@ function loadCharacter() {
 function createPlaceholder() {
     state.character = new THREE.Group();
     
-    const bodyMat = new THREE.MeshStandardMaterial({ 
-        color: 0x00d4ff,
-        roughness: 0.3,
-        metalness: 0.5
-    });
-    
     const body = new THREE.Mesh(
-        new THREE.CapsuleGeometry(0.5, 1.5, 4, 8),
-        bodyMat
+        new THREE.CylinderGeometry(0.5, 0.5, 1.5, 6),
+        new THREE.MeshStandardMaterial({ color: 0x00d4ff })
     );
-    body.position.y = 1.25;
+    body.position.y = 0.75;
     body.castShadow = true;
+    body.receiveShadow = true;
+    state.character.add(body);
     
     const head = new THREE.Mesh(
-        new THREE.SphereGeometry(0.4 , 16, 16),
-        new THREE.MeshStandardMaterial({ color: 0xffdbac, roughness: 0.5 })
+        new THREE.SphereGeometry(0.4, 8, 6),
+        new THREE.MeshStandardMaterial({ color: 0xffccaa })
     );
-    head.position.y = 2.4;
+    head.position.y = 1.6;
     head.castShadow = true;
-    
-    state.character.add(body);
     state.character.add(head);
+    
+    // POSIÇÃO INICIAL (1, 1, 1)
+    state.character.position.set(1, 1, 1);
     state.scene.add(state.character);
 }
 
@@ -300,66 +364,148 @@ function createPlaceholder() {
 // CONTROLES
 // ============================================
 
-function setupInput() {
+function setupControls() {
+    // Teclado
     window.addEventListener('keydown', (e) => {
         const k = e.key.toLowerCase();
-        if (state.keys.hasOwnProperty(k)) state.keys[k] = true;
+        if (k in state.keys) { state.keys[k] = true; e.preventDefault(); }
     });
-    
     window.addEventListener('keyup', (e) => {
         const k = e.key.toLowerCase();
-        if (state.keys.hasOwnProperty(k)) state.keys[k] = false;
+        if (k in state.keys) { state.keys[k] = false; e.preventDefault(); }
+    });
+    
+    // Zoom scroll
+    window.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        state.targetZoom = Math.max(CONFIG.cameraMinDistance,
+            Math.min(CONFIG.cameraMaxDistance, state.targetZoom + Math.sign(e.deltaY) * 0.8));
+    }, { passive: false });
+    
+    // Drag da câmera
+    const canvas = state.renderer?.domElement;
+    if (!canvas) return;
+    
+    canvas.addEventListener('mousedown', (e) => {
+        if (e.button !== 0) return;
+        e.preventDefault();
+        state.drag.active = true;
+        state.drag.lastX = e.clientX;
+        state.drag.lastY = e.clientY;
+        canvas.style.cursor = 'grabbing';
+    });
+    
+    window.addEventListener('mousemove', (e) => {
+        if (!state.drag.active) return;
+        const dx = e.clientX - state.drag.lastX;
+        const dy = e.clientY - state.drag.lastY;
+        state.camAngle.targetH += dx * CONFIG.cameraRotSpeed;
+        state.camAngle.targetV = Math.max(-0.2, Math.min(0.8, state.camAngle.targetV - dy * CONFIG.cameraRotSpeed));
+        state.drag.lastX = e.clientX;
+        state.drag.lastY = e.clientY;
+    });
+    
+    window.addEventListener('mouseup', () => {
+        state.drag.active = false;
+        canvas.style.cursor = 'default';
+    });
+    
+    // Touch drag
+    canvas.addEventListener('touchstart', (e) => {
+        if (e.touches.length !== 1) return;
+        e.preventDefault();
+        const t = e.touches[0];
+        state.drag.active = true;
+        state.drag.lastX = t.clientX;
+        state.drag.lastY = t.clientY;
+    });
+    
+    window.addEventListener('touchmove', (e) => {
+        if (!state.drag.active || e.touches.length !== 1) return;
+        e.preventDefault();
+        const t = e.touches[0];
+        const dx = t.clientX - state.drag.lastX;
+        const dy = t.clientY - state.drag.lastY;
+        state.camAngle.targetH += dx * CONFIG.cameraRotSpeed * 1.5;
+        state.camAngle.targetV = Math.max(-0.2, Math.min(0.8, state.camAngle.targetV - dy * CONFIG.cameraRotSpeed * 1.5));
+        state.drag.lastX = t.clientX;
+        state.drag.lastY = t.clientY;
+    });
+    
+    window.addEventListener('touchend', () => { state.drag.active = false; });
+    
+    // Pinch zoom
+    let pinchDist = 0, pinchZoom = CONFIG.cameraDistance;
+    window.addEventListener('touchstart', (e) => {
+        if (e.touches.length === 2) {
+            const dx = e.touches[0].clientX - e.touches[1].clientX;
+            const dy = e.touches[0].clientY - e.touches[1].clientY;
+            pinchDist = Math.hypot(dx, dy);
+            pinchZoom = state.targetZoom;
+        }
+    });
+    
+    window.addEventListener('touchmove', (e) => {
+        if (e.touches.length === 2) {
+            e.preventDefault();
+            const dx = e.touches[0].clientX - e.touches[1].clientX;
+            const dy = e.touches[0].clientY - e.touches[1].clientY;
+            const dist = Math.hypot(dx, dy);
+            const scale = dist / pinchDist;
+            state.targetZoom = Math.max(CONFIG.cameraMinDistance,
+                Math.min(CONFIG.cameraMaxDistance, pinchZoom - (scale - 1) * 5));
+        }
     });
 }
+
+// ============================================
+// JOYSTICK
+// ============================================
 
 function setupJoystick() {
     const container = document.getElementById('joystick-container');
     const knob = document.getElementById('joystick-knob');
+    if (!container || !knob) return;
     
     container.addEventListener('touchstart', (e) => {
         e.preventDefault();
-        const touch = e.touches[0];
+        const t = e.touches[0];
         const rect = container.getBoundingClientRect();
-        
         state.joystick.active = true;
-        state.joystick.originX = rect.left + rect.width / 2;
-        state.joystick.originY = rect.top + rect.height / 2;
-        state.joystick.currentX = touch.clientX;
-        state.joystick.currentY = touch.clientY;
-        
+        state.joystick.originX = rect.left + rect.width/2;
+        state.joystick.originY = rect.top + rect.height/2;
+        state.joystick.x = t.clientX;
+        state.joystick.y = t.clientY;
         knob.classList.add('active');
         updateJoystick(knob);
-    }, { passive: false });
+    });
     
     window.addEventListener('touchmove', (e) => {
         if (!state.joystick.active) return;
-        
         for (let t of e.touches) {
             const rect = container.getBoundingClientRect();
-            const cx = rect.left + rect.width / 2;
-            const cy = rect.top + rect.height / 2;
-            
+            const cx = rect.left + rect.width/2;
+            const cy = rect.top + rect.height/2;
             if (Math.hypot(t.clientX - cx, t.clientY - cy) < 100) {
-                state.joystick.currentX = t.clientX;
-                state.joystick.currentY = t.clientY;
+                state.joystick.x = t.clientX;
+                state.joystick.y = t.clientY;
                 updateJoystick(knob);
                 break;
             }
         }
-    }, { passive: false });
+    });
     
     window.addEventListener('touchend', () => {
-        if (!state.joystick.active) return;
         state.joystick.active = false;
-        state.joystick.vector.set(0, 0);
+        state.joystick.vec.set(0, 0);
         knob.classList.remove('active');
         knob.style.transform = `translate(-50%, -50%)`;
     });
 }
 
 function updateJoystick(knob) {
-    const dx = state.joystick.currentX - state.joystick.originX;
-    const dy = state.joystick.currentY - state.joystick.originY;
+    const dx = state.joystick.x - state.joystick.originX;
+    const dy = state.joystick.y - state.joystick.originY;
     const dist = Math.hypot(dx, dy);
     const max = CONFIG.joystickMaxRadius;
     const clamped = Math.min(dist, max);
@@ -369,54 +515,92 @@ function updateJoystick(knob) {
     const y = Math.sin(angle) * clamped;
     
     knob.style.transform = `translate(-50%, -50%) translate(${x}px, ${y}px)`;
-    state.joystick.vector.set(x / max, y / max);
+    state.joystick.vec.set(x / max, y / max);
 }
 
 // ============================================
-// GAME LOOP
+// GAME LOOP - MOVIMENTO RELATIVO À CÂMERA
 // ============================================
 
 function updateMovement() {
-    if (!state.character || !state.isLoaded || !state.gameStarted) return;
+    if (!state.character || !state.gameStarted) return;
     
-    const dir = new THREE.Vector3();
+    // Direção baseada na câmera
+    const cameraDir = new THREE.Vector3();
+    state.camera.getWorldDirection(cameraDir);
+    cameraDir.y = 0; // Ignorar inclinação vertical
+    cameraDir.normalize();
     
-    if (state.keys.w) dir.z -= 1;
-    if (state.keys.s) dir.z += 1;
-    if (state.keys.a) dir.x -= 1;
-    if (state.keys.d) dir.x += 1;
+    // Vetor perpendicular à direção da câmera (direita)
+    const cameraRight = new THREE.Vector3().crossVectors(
+        new THREE.Vector3(0, 1, 0),
+        cameraDir
+    ).normalize();
     
-    if (state.joystick.active && state.joystick.vector.length() > 0.1) {
-        dir.x = state.joystick.vector.x;
-        dir.z = state.joystick.vector.y;
+    // Direção do movimento
+    const moveDir = new THREE.Vector3(0, 0, 0);
+    
+    // Teclado - RELATIVO À CÂMERA
+    if (state.keys.w) moveDir.add(cameraDir);
+    if (state.keys.s) moveDir.sub(cameraDir);
+    if (state.keys.a) moveDir.add(cameraRight);
+    if (state.keys.d) moveDir.sub(cameraRight);
+    
+    // Joystick - também relativo à câmera
+    if (state.joystick.active && state.joystick.vec.length() > 0.1) {
+        // Joystick dá vetor (x, y) onde:
+        // x = direita/esquerda
+        // y = frente/trás (invertido porque no Three.js Z é frente)
+        const joyX = state.joystick.vec.x;
+        const joyY = -state.joystick.vec.y; // Inverter porque no joystick pra cima é y positivo
+        
+        moveDir.x = 0;
+        moveDir.z = 0;
+        
+        // Adicionar contribuição do joystick
+        moveDir.addScaledVector(cameraRight, joyX);
+        moveDir.addScaledVector(cameraDir, joyY);
     }
     
-    if (dir.length() > 0) {
-        dir.normalize();
+    // Aplicar movimento se houver direção
+    if (moveDir.length() > 0.1) {
+        moveDir.normalize();
         
-        const targetRot = Math.atan2(dir.x, dir.z);
+        // Rotacionar personagem na direção do movimento
+        const targetRot = Math.atan2(moveDir.x, moveDir.z);
         let diff = targetRot - state.character.rotation.y;
         
+        // Normalizar diferença de ângulo
         while (diff > Math.PI) diff -= Math.PI * 2;
         while (diff < -Math.PI) diff += Math.PI * 2;
         
+        // Rotação suave
         state.character.rotation.y += diff * CONFIG.rotationSpeed;
         
-        const move = dir.multiplyScalar(CONFIG.moveSpeed);
-        state.character.position.add(move);
+        // Mover
+        state.character.position.x += moveDir.x * CONFIG.moveSpeed;
+        state.character.position.z += moveDir.z * CONFIG.moveSpeed;
     }
 }
 
 function updateCamera() {
     if (!state.character) return;
     
-    const pos = state.character.position.clone();
-    const offset = new THREE.Vector3(0, CONFIG.cameraHeight, CONFIG.cameraDistance);
-    offset.applyAxisAngle(new THREE.Vector3(0, 0, 0), state.character.rotation.y);
+    // Smooth
+    state.cameraZoom += (state.targetZoom - state.cameraZoom) * 0.1;
+    state.camAngle.h += (state.camAngle.targetH - state.camAngle.h) * 0.1;
+    state.camAngle.v += (state.camAngle.targetV - state.camAngle.v) * 0.1;
     
-    const target = pos.clone().add(offset);
-    state.camera.position.lerp(target, CONFIG.cameraSmoothness);
-    state.camera.lookAt(pos.x, pos.y + 1.5, pos.z);
+    // Posição da câmera baseada no ângulo
+    const pos = state.character.position.clone().add(new THREE.Vector3(0, 1.2, 0));
+    const hDist = state.cameraZoom * Math.cos(state.camAngle.v);
+    const vDist = state.cameraZoom * Math.sin(state.camAngle.v);
+    
+    state.camera.position.x = pos.x + Math.sin(state.camAngle.h) * hDist;
+    state.camera.position.y = pos.y + vDist + 1.5;
+    state.camera.position.z = pos.z + Math.cos(state.camAngle.h) * hDist;
+    
+    state.camera.lookAt(pos);
 }
 
 function animate() {
@@ -430,14 +614,15 @@ function animate() {
     state.renderer.render(state.scene, state.camera);
 }
 
-function onWindowResize() {
+function onResize() {
+    if (!state.camera) return;
     state.camera.aspect = window.innerWidth / window.innerHeight;
     state.camera.updateProjectionMatrix();
     state.renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
 // ============================================
-// START
+// INICIAR
 // ============================================
 
 document.addEventListener('DOMContentLoaded', init);
