@@ -31,6 +31,7 @@ const state = {
     mixer: null,
     isLoaded: false,
     isTouchDevice: false,
+    gameStarted: false,
     
     joystick: {
         active: false,
@@ -43,16 +44,19 @@ const state = {
 };
 
 // ============================================
-// LOADING MANAGER
+// LOADING MANAGER COM BOTÃO INICIAR
 // ============================================
 
 const loadingManager = {
     progressBar: document.getElementById('progress-bar'),
     percentText: document.getElementById('loading-percent'),
     statusText: document.getElementById('loading-status'),
+    progressContainer: document.getElementById('progress-container'),
+    startButton: document.getElementById('start-button'),
     screen: document.getElementById('loading-screen'),
     canvas: document.getElementById('canvas-container'),
     ui: document.getElementById('ui'),
+    controlsHint: document.getElementById('controls-hint'),
     
     update(progress, status) {
         this.progressBar.style.width = progress + '%';
@@ -60,14 +64,37 @@ const loadingManager = {
         if (status) this.statusText.textContent = status;
     },
     
-    complete() {
-        this.update(100, 'Pronto!');
+    // Mostra botão de iniciar quando carregar
+    showStartButton() {
+        this.update(100, 'Pronto para jogar!');
+        this.statusText.classList.add('complete');
+        
+        // Esconder barra de progresso
+        setTimeout(() => {
+            this.progressContainer.classList.add('hidden');
+            this.statusText.classList.add('hidden');
+            this.controlsHint.classList.add('hidden');
+            
+            // Mostrar botão com animação
+            setTimeout(() => {
+                this.startButton.classList.add('visible');
+            }, 300);
+        }, 500);
+    },
+    
+    // Inicia o jogo quando clicar no botão
+    startGame() {
+        this.startButton.textContent = 'CARREGANDO...';
         
         setTimeout(() => {
             this.screen.classList.add('hidden');
             this.canvas.classList.add('loaded');
-            setTimeout(() => this.ui.classList.add('visible'), 300);
-        }, 500);
+            
+            setTimeout(() => {
+                this.ui.classList.add('visible');
+                state.gameStarted = true;
+            }, 300);
+        }, 200);
     }
 };
 
@@ -83,24 +110,30 @@ function init() {
         document.getElementById('mobile-hint').style.display = 'inline';
     }
     
+    // Configurar botão de iniciar
+    loadingManager.startButton.addEventListener('click', () => {
+        loadingManager.startGame();
+    });
+    
     simulateLoading();
 }
 
 function simulateLoading() {
     const steps = [
-        { progress: 15, status: 'Carregando recursos...', delay: 300 },
-        { progress: 35, status: 'Inicializando gráficos...', delay: 400 },
-        { progress: 55, status: 'Construindo mundo 3D...', delay: 500 },
-        { progress: 75, status: 'Carregando personagem...', delay: 600 },
-        { progress: 90, status: 'Finalizando...', delay: 400 },
-        { progress: 100, status: 'Pronto!', delay: 200 }
+        { progress: 15, status: 'Carregando recursos...', delay: 400 },
+        { progress: 35, status: 'Inicializando gráficos...', delay: 500 },
+        { progress: 55, status: 'Construindo mundo 3D...', delay: 600 },
+        { progress: 75, status: 'Carregando personagem...', delay: 700 },
+        { progress: 90, status: 'Finalizando...', delay: 500 },
+        { progress: 100, status: 'Pronto!', delay: 300 }
     ];
     
     let current = 0;
     
     function next() {
         if (current >= steps.length) {
-            startGame();
+            // Carregar Three.js em paralelo
+            startThreeJS();
             return;
         }
         const step = steps[current];
@@ -114,7 +147,7 @@ function simulateLoading() {
     next();
 }
 
-function startGame() {
+function startThreeJS() {
     createScene();
     createCamera();
     createRenderer();
@@ -129,17 +162,17 @@ function startGame() {
     
     window.addEventListener('resize', onWindowResize);
     
-    // Verificar quando personagem carregar
+    // Quando personagem carregar, mostrar botão
     const check = setInterval(() => {
         if (state.isLoaded) {
             clearInterval(check);
-            loadingManager.complete();
+            loadingManager.showStartButton();
         }
     }, 100);
 }
 
 // ============================================
-// THREE.JS - CENA
+// THREE.JS
 // ============================================
 
 function createScene() {
@@ -173,7 +206,7 @@ function createLighting() {
     state.scene.add(ambient);
     
     const sun = new THREE.DirectionalLight(0xffffff, 1.2);
-    sun.position.set(10, 20, 10);
+    sun.position.set(1, 1, 1);
     sun.castShadow = true;
     sun.shadow.mapSize.set(2048, 2048);
     state.scene.add(sun);
@@ -252,7 +285,7 @@ function createPlaceholder() {
     body.castShadow = true;
     
     const head = new THREE.Mesh(
-        new THREE.SphereGeometry(0.4, 16, 16),
+        new THREE.SphereGeometry(0.4 , 16, 16),
         new THREE.MeshStandardMaterial({ color: 0xffdbac, roughness: 0.5 })
     );
     head.position.y = 2.4;
@@ -344,17 +377,15 @@ function updateJoystick(knob) {
 // ============================================
 
 function updateMovement() {
-    if (!state.character || !state.isLoaded) return;
+    if (!state.character || !state.isLoaded || !state.gameStarted) return;
     
     const dir = new THREE.Vector3();
     
-    // Teclado
     if (state.keys.w) dir.z -= 1;
     if (state.keys.s) dir.z += 1;
     if (state.keys.a) dir.x -= 1;
     if (state.keys.d) dir.x += 1;
     
-    // Joystick
     if (state.joystick.active && state.joystick.vector.length() > 0.1) {
         dir.x = state.joystick.vector.x;
         dir.z = state.joystick.vector.y;

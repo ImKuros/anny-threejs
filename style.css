@@ -122,9 +122,21 @@ body {
 .game-subtitle {
     font-size: 14px;
     color: #888;
-    margin-bottom: 50px;
+    margin-bottom: 40px;
     letter-spacing: 4px;
     text-transform: uppercase;
+}
+
+/* ============================================
+   PROGRESSO E BOTÃO INICIAR
+   ============================================ */
+
+.loading-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    min-height: 80px;
 }
 
 .progress-container {
@@ -134,6 +146,12 @@ body {
     border-radius: 2px;
     overflow: hidden;
     position: relative;
+    transition: opacity 0.3s ease;
+}
+
+.progress-container.hidden {
+    opacity: 0;
+    pointer-events: none;
 }
 
 .progress-bar {
@@ -155,13 +173,17 @@ body {
 }
 
 .loading-status {
-    margin-top: 20px;
     font-size: 13px;
     color: #666;
     letter-spacing: 1px;
     display: flex;
     align-items: center;
     gap: 8px;
+    transition: opacity 0.3s ease;
+}
+
+.loading-status.hidden {
+    opacity: 0;
 }
 
 .loading-status::before {
@@ -174,18 +196,58 @@ body {
     animation: spin 1s linear infinite;
 }
 
+.loading-status.complete::before {
+    display: none;
+}
+
 @keyframes spin {
     to { transform: rotate(360deg); }
 }
 
-.controls-hint {
-    position: absolute;
-    bottom: 40px;
-    font-size: 12px;
-    color: #555;
-    text-align: center;
-    line-height: 1.6;
-    max-width: 80%;
+/* BOTÃO INICIAR */
+.start-button {
+    padding: 16px 48px;
+    font-size: 18px;
+    font-weight: 700;
+    color: #0f0f1e;
+    background: linear-gradient(135deg, #00d4ff 0%, #7b2cbf 100%);
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    box-shadow: 
+        0 10px 30px rgba(0, 212, 255, 0.3),
+        0 0 0 2px rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
+    opacity: 0;
+    transform: scale(0.8) translateY(20px);
+    pointer-events: none;
+    display: none;
+}
+
+.start-button.visible {
+    display: block;
+    opacity: 1;
+    transform: scale(1) translateY(0);
+    pointer-events: auto;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+.start-button:hover {
+    transform: scale(1.05) translateY(-2px);
+    box-shadow: 
+        0 15px 40px rgba(0, 212, 255, 0.4),
+        0 0 0 2px rgba(255, 255, 255, 0.2);
+}
+
+.start-button:active {
+    transform: scale(0.98);
+}
+
+@keyframes pulse {
+    0%, 100% { box-shadow: 0 10px 30px rgba(0, 212, 255, 0.3), 0 0 0 2px rgba(255, 255, 255, 0.1); }
+    50% { box-shadow: 0 10px 40px rgba(0, 212, 255, 0.5), 0 0 20px rgba(0, 212, 255, 0.3), 0 0 0 2px rgba(255, 255, 255, 0.2); }
 }
 
 /* ============================================
@@ -250,6 +312,21 @@ body {
         display: block;
         margin-top: 8px;
     }
+}
+
+.controls-hint {
+    position: absolute;
+    bottom: 40px;
+    font-size: 12px;
+    color: #555;
+    text-align: center;
+    line-height: 1.6;
+    max-width: 80%;
+    transition: opacity 0.3s ease;
+}
+
+.controls-hint.hidden {
+    opacity: 0;
 }
 
 /* ============================================

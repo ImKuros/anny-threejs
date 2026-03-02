@@ -17,14 +17,23 @@
         <h1 class="game-title">ANNY</h1>
         <p class="game-subtitle">Aventura 3D</p>
         
-        <div class="progress-container">
-            <div class="loading-percent" id="loading-percent">0%</div>
-            <div class="progress-bar" id="progress-bar"></div>
+        <!-- Área de loading e botão -->
+        <div class="loading-content">
+            <!-- Barra de progresso (visível durante carregamento) -->
+            <div class="progress-container" id="progress-container">
+                <div class="loading-percent" id="loading-percent">0%</div>
+                <div class="progress-bar" id="progress-bar"></div>
+            </div>
+            
+            <!-- Status de carregamento -->
+            <div class="loading-status" id="loading-status">Inicializando...</div>
+            
+            <!-- Botão INICIAR (aparece após carregar) -->
+            <button class="start-button" id="start-button">INICIAR</button>
         </div>
         
-        <div class="loading-status" id="loading-status">Inicializando...</div>
-        
-        <div class="controls-hint">
+        <!-- Dicas de controles -->
+        <div class="controls-hint" id="controls-hint">
             <span id="desktop-hint">WASD para mover • Mouse para câmera</span>
             <span id="mobile-hint" style="display: none;">Joystick para mover</span>
         </div>
