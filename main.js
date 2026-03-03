@@ -295,44 +295,68 @@ function createGround() {
 
 function loadCharacter() {
     const loader = new GLTFLoader();
-    loader.load(
-        'assets/anny.glb',
-        (gltf) => {
-            state.character = gltf.scene;
-            state.character.traverse(c => {
-                if (c.isMesh) {
-                    c.castShadow = true;
-                    c.receiveShadow = true;
-                    if (c.material) {
-                        if (Array.isArray(c.material)) {
-                            c.material.forEach(m => { m.roughness = 0.5; m.metalness = 0; });
-                        } else {
-                            c.material.roughness = 0.5;
-                            c.material.metalness = 0;
-                        }
+    const characterGroup = new THREE.Group();
+    let loadedCount = 0;
+    let hasError = false;
+
+    function finalizeCharacter() {
+        state.character = characterGroup;
+
+        // Posição inicial
+        state.character.position.set(0,0,0);
+        state.character.rotation.y = 0;
+
+        state.scene.add(state.character);
+        state.isLoaded = true;
+    }
+
+    function onModelLoaded(gltf) {
+        const model = gltf.scene;
+
+        model.traverse(c => {
+            if (c.isMesh) {
+                c.castShadow = true;
+                c.receiveShadow = true;
+
+                if (c.material) {
+                    if (Array.isArray(c.material)) {
+                        c.material.forEach(m => {
+                            m.roughness = 0.5;
+                            m.metalness = 0;
+                        });
+                    } else {
+                        c.material.roughness = 0.5;
+                        c.material.metalness = 0;
                     }
                 }
-            });
-            
-            // POSIÇÃO INICIAL (1, 1, 1)
-            state.character.position.set(1, 1, 1);
-            state.character.rotation.y = 0;
-            
-            state.scene.add(state.character);
-            
-            if (gltf.animations?.length) {
-                state.mixer = new THREE.AnimationMixer(state.character);
-                state.mixer.clipAction(gltf.animations[0]).play();
             }
-            
-            state.isLoaded = true;
-        },
-        null,
-        () => {
-            createPlaceholder();
-            state.isLoaded = true;
+        });
+
+        characterGroup.add(model);
+
+        // Se tiver animação (usa a primeira encontrada)
+        if (!state.mixer && gltf.animations && gltf.animations.length > 0) {
+            state.mixer = new THREE.AnimationMixer(model);
+            state.mixer.clipAction(gltf.animations[0]).play();
         }
-    );
+
+        loadedCount++;
+
+        if (loadedCount === 2 && !hasError) {
+            finalizeCharacter();
+        }
+    }
+
+    function onError() {
+        if (hasError) return;
+        hasError = true;
+        createPlaceholder();
+        state.isLoaded = true;
+    }
+
+    // Carregar os dois modelos
+    loader.load('assets/anny1.glb', onModelLoaded, null, onError);
+    loader.load('assets/anny2.glb', onModelLoaded, null, onError);
 }
 
 function createPlaceholder() {
@@ -356,7 +380,7 @@ function createPlaceholder() {
     state.character.add(head);
     
     // POSIÇÃO INICIAL (1, 1, 1)
-    state.character.position.set(1, 1, 1);
+    state.character.position.set(2,2,2);
     state.scene.add(state.character);
 }
 
