@@ -557,8 +557,8 @@ function updateMovement() {
     
     // Vetor perpendicular à direção da câmera (direita)
     const cameraRight = new THREE.Vector3().crossVectors(
-        new THREE.Vector3(0, 1, 0),
-        cameraDir
+    cameraDir,
+    new THREE.Vector3(0, 1, 0)
     ).normalize();
     
     // Direção do movimento
