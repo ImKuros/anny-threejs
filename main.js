@@ -140,7 +140,7 @@ function simulateLoading() {
         { p: 40, s: 'Gráficos...', d: 150 },
         { p: 60, s: 'Mundo 3D...', d: 150 },
         { p: 80, s: 'Personagem...', d: 200 },
-        { p: 95, s: 'Quase lá...', d: 150 }
+        { p: 95, s: 'quase lá...', d: 150 }
     ];
     
     let i = 0;
@@ -213,10 +213,10 @@ function createRenderer() {
 // ============================================
 
 function createLighting() {
-    const ambient = new THREE.AmbientLight(0x404060, 0.7);
+    const ambient = new THREE.AmbientLight(0x404060, 1.7);
     state.scene.add(ambient);
     
-    const sun = new THREE.DirectionalLight(0xfff5d1, 1.0);
+    const sun = new THREE.DirectionalLight(0xfff5d1, 2.0);
     sun.position.set(10, 20, 5);
     sun.castShadow = true;
     sun.shadow.mapSize.width = CONFIG.shadowMapSize;
@@ -271,7 +271,7 @@ function createGround() {
     if (!state.isTouch) {
         for (let i = 0; i < CONFIG.grassCount; i++) {
             const blade = new THREE.Mesh(
-                new THREE.PlaneGeometry(0.1, 0.2),
+                new THREE.PlaneGeometry(0.5, 0.6),
                 new THREE.MeshStandardMaterial({ color: 0x3a7a3a, side: THREE.DoubleSide })
             );
             
@@ -558,7 +558,7 @@ function updateMovement() {
     // Vetor perpendicular à direção da câmera (direita)
     const cameraRight = new THREE.Vector3().crossVectors(
     cameraDir,
-    new THREE.Vector3(0, 1, 0)
+    new THREE.Vector3(0, -1, 0)
     ).normalize();
     
     // Direção do movimento
