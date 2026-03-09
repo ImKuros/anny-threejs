@@ -1,88 +1,152 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Anny 3D - Otimizado</title>
-    <link rel="stylesheet" href="style.css">
-    <style>
-        /* Forçar landscape no mobile */
-        @media (orientation: portrait) {
-            body::after {
-                content: "Por favor, gire o dispositivo";
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: #000;
-                color: white;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                z-index: 10000;
-                font-size: 24px;
-                text-align: center;
-                padding: 20px;
-            }
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+
+<title>Flora's Odyssey</title>
+
+<link rel="stylesheet" href="style.css">
+
+<style>
+
+/* VIDEO DE FUNDO */
+
+.loading-video{
+position:absolute;
+top:0;
+left:0;
+width:120%;
+height:120%;
+object-fit:cover;
+z-index:-2;
+pointer-events:none;
+}
+
+/* OVERLAY CINEMATICO */
+
+.loading-overlay{
+position:absolute;
+top:0;
+left:0;
+width:120%;
+height:120%;
+background:linear-gradient(
+180deg,
+rgba(0,0,0,0.4),
+rgba(10,10,20,0.85)
+);
+z-index:-1;
+}
+
+/* garantir posição */
+
+#loading-screen{
+position:fixed;
+overflow:hidden;
+}
+
+</style>
+
 </head>
+
 <body>
-    <!-- TELA DE LOADING -->
-    <div id="loading-screen">
-        <div class="cover-container">
-            <!-- VOLTAR PARA PNG (mais leve) -->
-            <img src="assets/anny.png" alt="Anny" class="cover-image" loading="eager">
-        </div>
-        
-        <h1 class="game-title">ANNY</h1>
-        <p class="game-subtitle">Aventura 3D</p>
-        
-        <!-- Área de loading -->
-        <div class="loading-content">
-            <div class="progress-container" id="progress-container">
-                <div class="loading-percent" id="loading-percent">0%</div>
-                <div class="progress-bar" id="progress-bar"></div>
-            </div>
-            
-            <div class="loading-status" id="loading-status">Inicializando...</div>
-            <button class="start-button" id="start-button">INICIAR</button>
-        </div>
-        
-        <!-- Dicas de controles -->
-        <div class="controls-hint" id="controls-hint">
-            <span id="desktop-hint">WASD • Mouse arrasta • Scroll zoom</span>
-            <span id="mobile-hint" style="display: none;">Joystick • Arrastar • Pinça</span>
-        </div>
-    </div>
-    
-    <!-- UI -->
-    <div id="ui">
-        <h1>🎮 Anny</h1>
-        <p class="desktop-only">WASD | Mouse | Scroll</p>
-        <p class="mobile-hint-ui" style="display: none;">👆 Joystick + Arrastar</p>
-    </div>
-    
-    <!-- JOYSTICK -->
-    <div id="joystick-container">
-        <div class="joystick-base"></div>
-        <div class="joystick-knob" id="joystick-knob"></div>
-    </div>
-    
-    <!-- CANVAS -->
-    <div id="canvas-container"></div>
 
-    <!-- IMPORT MAP -->
-    <script type="importmap">
-        {
-            "imports": {
-                "three": "https://unpkg.com/three@0.128.0/build/three.module.js",
-                "three/addons/": "https://unpkg.com/three@0.128.0/examples/jsm/"
-            }
-        }
-    </script>
+<!-- LOADING -->
 
-    <script type="module" src="main.js"></script>
+<div id="loading-screen">
+
+<!-- VIDEO FUNDO -->
+
+<video class="loading-video" autoplay muted loop playsinline>
+
+<source src="assets/loading-bg.mp4" type="video/mp4">
+
+</video>
+
+<div class="loading-overlay"></div>
+
+<h1 class="game-title">Flora's Odyssey</h1>
+<p class="game-subtitle">THE ABYSS</p>
+
+<div class="loading-content">
+
+<div class="progress-container" id="progress-container">
+
+<div class="loading-percent" id="loading-percent">0%</div>
+
+<div class="progress-bar" id="progress-bar"></div>
+
+</div>
+
+<div class="loading-status" id="loading-status">
+Inicializando...
+</div>
+
+<button class="start-button" id="start-button">
+INICIAR
+</button>
+
+</div>
+
+<div class="controls-hint" id="controls-hint">
+
+<span id="desktop-hint">
+WASD • Mouse arrasta • Scroll zoom
+</span>
+
+<span id="mobile-hint" style="display:none;">
+Joystick • Arrastar • Pinça
+</span>
+
+</div>
+
+</div>
+
+<!-- UI -->
+
+<div id="ui">
+
+<h1>🎮 Anny</h1>
+
+<p class="desktop-only">
+WASD | Mouse | Scroll
+</p>
+
+<p class="mobile-hint-ui" style="display:none;">
+👆 Joystick + Arrastar
+</p>
+
+</div>
+
+<!-- JOYSTICK -->
+
+<div id="joystick-container">
+
+<div class="joystick-base"></div>
+
+<div class="joystick-knob" id="joystick-knob"></div>
+
+</div>
+
+<!-- CANVAS -->
+
+<div id="canvas-container"></div>
+
+<!-- THREE -->
+
+<script type="importmap">
+
+{
+"imports": {
+"three": "https://unpkg.com/three@0.128.0/build/three.module.js",
+"three/addons/": "https://unpkg.com/three@0.128.0/examples/jsm/"
+}
+}
+
+</script>
+
+<script type="module" src="main.js"></script>
+
 </body>
 </html>
