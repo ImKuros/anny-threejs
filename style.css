@@ -7,6 +7,10 @@
     user-select: none;
 }
 
+html, body {
+    overscroll-behavior: none;
+}
+
 body {
     overflow: hidden;
     background: #0f0f1a;
@@ -173,10 +177,16 @@ body {
     transition: opacity 0.3s;
     font-size: 13px;
     border: 1px solid rgba(255,255,255,0.1);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.4);
 }
 
 #ui.visible { opacity: 1; }
-#ui h1 { font-size: 18px; color: #00d4ff; margin-bottom: 5px; }
+
+#ui h1 {
+    font-size: 18px;
+    color: #00d4ff;
+    margin-bottom: 5px;
+}
 
 /* JOYSTICK */
 #joystick-container {
@@ -187,9 +197,12 @@ body {
     height: 100px;
     display: none;
     z-index: 50;
+    touch-action: none;
 }
 
-@media (pointer: coarse) { #joystick-container { display: block; } }
+@media (pointer: coarse) {
+    #joystick-container { display: block; }
+}
 
 .joystick-base {
     position: absolute;
@@ -211,11 +224,13 @@ body {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    transition: transform 0.05s;
+    transition: transform 0.03s linear;
     pointer-events: none;
 }
 
-.joystick-knob.active { background: rgba(0,212,255,0.6); }
+.joystick-knob.active {
+    background: rgba(0,212,255,0.6);
+}
 
 /* CONTROLS HINT */
 .controls-hint {
@@ -237,8 +252,69 @@ body {
 
 /* RESPONSIVO */
 @media (max-width: 600px) {
-    .cover-container { width: 160px; height: 160px; }
-    .game-title { font-size: 28px; }
-    #ui { padding: 8px 12px; font-size: 11px; }
-    #ui h1 { font-size: 14px; }
+
+    .cover-container {
+        width: 160px;
+        height: 160px;
+    }
+
+    .game-title {
+        font-size: 28px;
+    }
+
+    #ui {
+        padding: 8px 12px;
+        font-size: 11px;
+    }
+
+    #ui h1 {
+        font-size: 14px;
+    }
+
+}
+
+/* =====================================
+   CONTROLE DE AUDIO (BORBOLETAS)
+===================================== */
+
+#audio-control {
+
+    position:absolute;
+    top:20px;
+    right:20px;
+
+    width:44px;
+    height:44px;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    font-size:24px;
+
+    background:rgba(0,0,0,0.5);
+    backdrop-filter:blur(6px);
+
+    border-radius:12px;
+    border:1px solid rgba(255,255,255,0.1);
+
+    cursor:pointer;
+
+    z-index:100;
+
+    transition:all 0.25s ease;
+
+}
+
+#audio-control:hover {
+
+    transform:scale(1.15);
+    background:rgba(0,0,0,0.7);
+
+}
+
+#audio-control:active {
+
+    transform:scale(0.9);
+
 }

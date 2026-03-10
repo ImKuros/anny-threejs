@@ -46,6 +46,35 @@ position:fixed;
 overflow:hidden;
 }
 
+/* BOTÃO AUDIO */
+
+#audio-control{
+
+position:fixed;
+top:20px;
+right:20px;
+
+font-size:28px;
+cursor:pointer;
+
+background:rgba(0,0,0,0.4);
+backdrop-filter:blur(5px);
+
+padding:10px 14px;
+border-radius:12px;
+
+z-index:9999;
+
+transition:0.3s;
+
+}
+
+#audio-control:hover{
+
+transform:scale(1.1);
+
+}
+
 </style>
 
 </head>
@@ -56,12 +85,8 @@ overflow:hidden;
 
 <div id="loading-screen">
 
-<!-- VIDEO FUNDO -->
-
 <video class="loading-video" autoplay muted loop playsinline>
-
 <source src="assets/loading-bg.mp4" type="video/mp4">
-
 </video>
 
 <div class="loading-overlay"></div>
@@ -129,24 +154,92 @@ WASD | Mouse | Scroll
 
 </div>
 
+<!-- CONTROLE AUDIO -->
+
+<div id="audio-control">🦋</div>
+
+<!-- MUSICA -->
+
+<audio id="menu-music" autoplay loop>
+<source src="assets/menu-music.mp3" type="audio/mpeg">
+</audio>
+
 <!-- CANVAS -->
 
 <div id="canvas-container"></div>
 
-<!-- THREE -->
-
 <script type="importmap">
-
 {
 "imports": {
 "three": "https://unpkg.com/three@0.128.0/build/three.module.js",
 "three/addons/": "https://unpkg.com/three@0.128.0/examples/jsm/"
 }
 }
-
 </script>
 
 <script type="module" src="main.js"></script>
+
+<script>
+
+const music = document.getElementById("menu-music")
+const control = document.getElementById("audio-control")
+
+let volumes = [0,0.10,0.5,0.75,1]
+let level = 1
+
+music.volume = volumes[level]
+
+function updateButterfly(){
+
+switch(level){
+
+case 0:
+control.textContent="🐛"
+break
+
+case 1:
+control.textContent="🦋"
+control.style.fontSize="18px"
+break
+
+case 2:
+control.textContent="🦋"
+control.style.fontSize="24px"
+break
+
+case 3:
+control.textContent="🦋"
+control.style.fontSize="30px"
+break
+
+case 4:
+control.textContent="🦋✨"
+control.style.fontSize="34px"
+break
+
+}
+
+}
+
+updateButterfly()
+
+control.onclick=()=>{
+
+level++
+
+if(level>=volumes.length) level=0
+
+music.volume=volumes[level]
+
+updateButterfly()
+
+}
+
+document.body.addEventListener("touchstart",()=>{
+music.play()
+},{once:true})
+
+</script>
 
 </body>
 </html>
