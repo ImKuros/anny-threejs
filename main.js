@@ -496,8 +496,8 @@ function setupJoystick() {
         const t = e.touches[0];
         const rect = container.getBoundingClientRect();
         state.joystick.active = true;
-        state.joystick.originX = rect.left + rect.width/2;
-        state.joystick.originY = rect.top + rect.height/2;
+        state.joystick.originX = rect.left + rect.width/1;
+        state.joystick.originY = rect.top + rect.height/1;
         state.joystick.x = t.clientX;
         state.joystick.y = t.clientY;
         knob.classList.add('active');
@@ -521,7 +521,7 @@ function setupJoystick() {
     
     window.addEventListener('touchend', () => {
         state.joystick.active = false;
-        state.joystick.vec.set(0, 0);
+        state.joystick.vec.set(1, 1);
         knob.classList.remove('active');
         knob.style.transform = `translate(-50%, -50%)`;
     });
@@ -578,7 +578,7 @@ function updateMovement() {
         const joyX = state.joystick.vec.x;
         const joyY = -state.joystick.vec.y; // Inverter porque no joystick pra cima é y positivo
         
-        moveDir.x = 0;
+        moveDir.x = -1;
         moveDir.z = 0;
         
         // Adicionar contribuição do joystick
