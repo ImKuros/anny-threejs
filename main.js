@@ -16,7 +16,7 @@ const CONFIG = {
     cameraDistance: 6,
     cameraHeight: 3,
     cameraSmoothness: 0.15,
-    cameraMinDistance: 3,
+    cameraMinDistance: 2,
     cameraMaxDistance: 10,
 
     cameraRotSpeed: 0.005,
@@ -26,7 +26,7 @@ const CONFIG = {
 
     shadowMapSize: 1024,
     grassCount: 50,
-    textureSize: 256
+    textureSize: 350
 };
 
 // ============================================
@@ -506,8 +506,8 @@ function updateMovement() {
 
     if (state.joystick.active) {
 
-        const joyX = state.joystick.vec.x;
-        const joyY = -state.joystick.vec.y;
+        const joyX = -state.joystick.vec.x;
+        const joyY = state.joystick.vec.y;
 
         moveDir.addScaledVector(cameraRight, joyX);
         moveDir.addScaledVector(cameraDir, joyY);
@@ -518,7 +518,7 @@ function updateMovement() {
 
         moveDir.normalize();
 
-        const targetRot = Math.atan2(moveDir.x, moveDir.z);
+        const targetRot = Math.atan2(-moveDir.x, moveDir.z);
 
         let diff = targetRot - state.character.rotation.y;
 
@@ -527,7 +527,7 @@ function updateMovement() {
 
         state.character.rotation.y += diff * CONFIG.rotationSpeed;
 
-        state.character.position.x += moveDir.x * CONFIG.moveSpeed;
+        state.character.position.x -= moveDir.x * CONFIG.moveSpeed;
         state.character.position.z += moveDir.z * CONFIG.moveSpeed;
 
     }
@@ -548,7 +548,7 @@ function updateCamera() {
     state.camAngle.v += (state.camAngle.targetV - state.camAngle.v) * 0.1;
 
     const pos =
-        state.character.position.clone().add(new THREE.Vector3(0, 1.2, 0));
+        state.character.position.clone().add(new THREE.Vector3(0, 1, 0));
 
     const hDist = state.cameraZoom * Math.cos(state.camAngle.v);
     const vDist = state.cameraZoom * Math.sin(state.camAngle.v);

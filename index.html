@@ -51,14 +51,14 @@ overflow:hidden;
 #audio-control{
 
 position:fixed;
-top:20px;
-right:20px;
+top:18px;
+right:18px;
 
 font-size:28px;
 cursor:pointer;
 
-background:rgba(0,0,0,0.4);
-backdrop-filter:blur(5px);
+background:rgba(0, 0, 0, 0);
+backdrop-filter:blur(0px);
 
 padding:10px 14px;
 border-radius:12px;
@@ -117,7 +117,6 @@ INICIAR
 <div class="controls-hint" id="controls-hint">
 
 <span id="desktop-hint">
-WASD • Mouse arrasta • Scroll zoom
 </span>
 
 <span id="mobile-hint" style="display:none;">
@@ -133,10 +132,6 @@ Joystick • Arrastar • Pinça
 <div id="ui">
 
 <h1>🎮 Anny</h1>
-
-<p class="desktop-only">
-WASD | Mouse | Scroll
-</p>
 
 <p class="mobile-hint-ui" style="display:none;">
 👆 Joystick + Arrastar
@@ -184,8 +179,9 @@ WASD | Mouse | Scroll
 const music = document.getElementById("menu-music")
 const control = document.getElementById("audio-control")
 
-let volumes = [0,0.10,0.5,0.75,1]
-let level = 1
+let volumes = [0,0.1,0.5,0.75,1]
+let level = 0
+
 
 music.volume = volumes[level]
 
@@ -195,16 +191,17 @@ switch(level){
 
 case 0:
 control.textContent="🐛"
+control.style.fontSize="15px"
 break
 
 case 1:
 control.textContent="🦋"
-control.style.fontSize="18px"
+control.style.fontSize="15px"
 break
 
 case 2:
 control.textContent="🦋"
-control.style.fontSize="24px"
+control.style.fontSize="25px"
 break
 
 case 3:
@@ -213,8 +210,8 @@ control.style.fontSize="30px"
 break
 
 case 4:
-control.textContent="🦋✨"
-control.style.fontSize="34px"
+control.textContent="🦋"
+control.style.fontSize="35px"
 break
 
 }
